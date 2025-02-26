@@ -44,7 +44,11 @@ export default {
 		return fetch(imageRequest, {
 			cf: {
 				cacheKey: imageURL.split('?')[0],  // Cache key should be the same for the same image
-				image: { width }
+				image: {
+					width,
+					format: 'avif',
+					quality: 100,
+				}
 			}
 		})
 	},
