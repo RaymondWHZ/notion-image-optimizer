@@ -27,7 +27,7 @@ export default {
 		const imageURL = decodeURI(encodedImageURL)
 	
 		try {
-		  const { hostname } = new URL(imageURL)
+		  const { hostname, pathname } = new URL(imageURL)
 
 		  // Demo: Only accept "example.com" images
 		  if (hostname !== 'prod-files-secure.s3.us-west-2.amazonaws.com') {
@@ -41,6 +41,11 @@ export default {
 		const imageRequest = new Request(imageURL)
 	
 		// Returning fetch() with resizing options will pass through response with the resized image.
-		return fetch(imageRequest, { cf: { image: { width } } })
+		return fetch(imageRequest, {
+			cf: {
+				cacheKey: imageURL.split('?')[0],  // Cache key should be the same for the same image
+				image: { width }
+			}
+		})
 	},
 } satisfies ExportedHandler<Env>;
