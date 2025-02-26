@@ -12,7 +12,35 @@
  */
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+	async fetch(request): Promise<Response> {
+		// Parse request URL to get access to query string
+		let url = new URL(request.url)
+
+		// Get width query parameters
+		let width = url.searchParams.has("width") ? parseInt(url.searchParams.get("width")!) : undefined
+	
+		// Get URL of the original (full size) image to resize.
+		// You could adjust the URL here, e.g., prefix it with a fixed address of your server,
+		// so that user-visible URLs are shorter and cleaner.
+		const encodedImageURL = url.searchParams.get("image")
+		if (!encodedImageURL) return new Response('Missing "image" value', { status: 400 })
+		const imageURL = decodeURI(encodedImageURL)
+	
+		try {
+		  const { hostname } = new URL(imageURL)
+
+		  // Demo: Only accept "example.com" images
+		  if (hostname !== 'prod-files-secure.s3.us-west-2.amazonaws.com') {
+			return new Response('Must use "prod-files-secure.s3.us-west-2.amazonaws.com" source images', { status: 403 })
+		  }
+		} catch (err) {
+		  return new Response('Invalid "image" value', { status: 400 })
+		}
+	
+		// Build a request that passes through request headers
+		const imageRequest = new Request(imageURL)
+	
+		// Returning fetch() with resizing options will pass through response with the resized image.
+		return fetch(imageRequest, { cf: { image: { width } } })
 	},
 } satisfies ExportedHandler<Env>;
