@@ -36,14 +36,23 @@ export default {
 		} catch (err) {
 		  return new Response('Invalid "image" value', { status: 400 })
 		}
+
+		// Get cache and cache key
+		const cache = caches.default
+		const cacheKey = `${imageURL.split('?')[0]}-${width}`
+
+		// Check if the image is already in the cache
+		const cachedResponse = await cache.match(cacheKey)
+		if (cachedResponse) {
+			return cachedResponse
+		}
 	
 		// Build a request that passes through request headers
 		const imageRequest = new Request(imageURL)
 	
 		// Returning fetch() with resizing options will pass through response with the resized image.
-		return fetch(imageRequest, {
+		const response = await fetch(imageRequest, {
 			cf: {
-				cacheKey: imageURL.split('?')[0],  // Cache key should be the same for the same image
 				image: {
 					width,
 					format: 'avif',
@@ -51,5 +60,13 @@ export default {
 				}
 			}
 		})
+
+		// Cache the response
+		if (response.ok) {
+			const responseToCache = response.clone()
+			await cache.put(cacheKey, responseToCache)
+		}
+
+		return response
 	},
 } satisfies ExportedHandler<Env>;
