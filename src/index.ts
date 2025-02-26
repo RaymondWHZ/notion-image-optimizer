@@ -27,9 +27,9 @@ export default {
 		const imageURL = decodeURI(encodedImageURL)
 	
 		try {
-		  const { hostname, pathname } = new URL(imageURL)
+		  const { hostname } = new URL(imageURL)
 
-		  // Demo: Only accept "example.com" images
+		  // Only accept "prod-files-secure.s3.us-west-2.amazonaws.com" images
 		  if (hostname !== 'prod-files-secure.s3.us-west-2.amazonaws.com') {
 			return new Response('Must use "prod-files-secure.s3.us-west-2.amazonaws.com" source images', { status: 403 })
 		  }
