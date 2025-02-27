@@ -40,7 +40,7 @@ export default {
 			// Get image URL
 			let result: BodyInit = await object.blob()
 			if (width) {
-				const inputImage = PhotonImage.new_from_blob(result)
+				const inputImage = PhotonImage.new_from_byteslice(await result.bytes())
 				const originalWidth = inputImage.get_width()
 				const originalHeight = inputImage.get_height()
 				if (width > originalWidth) {
