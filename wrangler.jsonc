@@ -14,7 +14,7 @@
 		"enabled": true
 	},
   "images": {
-    "binding": "IMAGE"
+    "binding": "IMAGES"
   },
   "r2_buckets": [
     {
