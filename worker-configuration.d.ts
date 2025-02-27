@@ -2,4 +2,5 @@
 
 interface Env {
 	CACHED_NOTION_IMAGES_BUCKET: R2Bucket;
+	IMAGES: ImagesBinding;
 }

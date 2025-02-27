@@ -13,6 +13,9 @@
 	"observability": {
 		"enabled": true
 	},
+  "images": {
+    "binding": "IMAGE"
+  },
   "r2_buckets": [
     {
       "binding": "CACHED_NOTION_IMAGES_BUCKET",

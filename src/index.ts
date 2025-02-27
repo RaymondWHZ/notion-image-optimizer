@@ -11,8 +11,6 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { PhotonImage, resize, SamplingFilter } from "@cf-wasm/photon";
-
 export default {
 	async fetch(request, env): Promise<Response> {
 		// Parse request URL to get access to query string
@@ -38,25 +36,18 @@ export default {
 			}
 
 			// Get image URL
-			let result: BodyInit = await object.blob()
+			let result: BodyInit = object.body
 			if (width) {
-				const inputImage = PhotonImage.new_from_byteslice(await result.bytes())
-				const originalWidth = inputImage.get_width()
-				const originalHeight = inputImage.get_height()
-				if (width > originalWidth) {
-					width = originalWidth
-				}
-				const height = Math.round((width / originalWidth) * originalHeight)
-				const outputImage = resize(inputImage, width, height, SamplingFilter.Nearest)
-				result = outputImage.get_bytes_webp()
-				inputImage.free()
-				outputImage.free()
+				result = (await env.IMAGES.input(result)
+				  .transform({ width })
+				  .output({ format: "image/avif", quality: 100 }))
+				  .image()
 			}
 
 			// Return response
 			return new Response(result, {
 				headers: {
-					'Content-Type': 'image/webp',
+					'Content-Type': 'image/avif',
 				},
 			})
 		} else {
