@@ -11,62 +11,52 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import sharp from "sharp";
+
 export default {
-	async fetch(request): Promise<Response> {
+	async fetch(request, env): Promise<Response> {
 		// Parse request URL to get access to query string
 		let url = new URL(request.url)
 
-		// Get width query parameters
-		let width = url.searchParams.has("width") ? parseInt(url.searchParams.get("width")!) : undefined
-	
-		// Get URL of the original (full size) image to resize.
-		// You could adjust the URL here, e.g., prefix it with a fixed address of your server,
-		// so that user-visible URLs are shorter and cleaner.
-		const encodedImageURL = url.searchParams.get("image")
-		if (!encodedImageURL) return new Response('Missing "image" value', { status: 400 })
-		const imageURL = decodeURI(encodedImageURL)
-	
-		try {
-		  const { hostname } = new URL(imageURL)
+		if (request.method === 'PUT') {
+			// TODO update existing cache
+			return new Response('Not implemented', { status: 501 })
+		} else if (request.method === 'GET') {
+			// Get object key
+			const key = url.pathname
 
-		  // Only accept "prod-files-secure.s3.us-west-2.amazonaws.com" images
-		  if (hostname !== 'prod-files-secure.s3.us-west-2.amazonaws.com') {
-			return new Response('Must use "prod-files-secure.s3.us-west-2.amazonaws.com" source images', { status: 403 })
-		  }
-		} catch (err) {
-		  return new Response('Invalid "image" value', { status: 400 })
-		}
-
-		// Get cache and cache key
-		const cache = caches.default
-		const cacheKey = `${imageURL.split('?')[0]}-${width}`
-
-		// Check if the image is already in the cache
-		const cachedResponse = await cache.match(cacheKey)
-		if (cachedResponse) {
-			return cachedResponse
-		}
-	
-		// Build a request that passes through request headers
-		const imageRequest = new Request(imageURL)
-	
-		// Returning fetch() with resizing options will pass through response with the resized image.
-		const response = await fetch(imageRequest, {
-			cf: {
-				image: {
-					width,
-					format: 'avif',
-					quality: 100,
-				}
+			// Get width query parameters
+			let width: number | undefined = parseInt(url.searchParams.get("width") ?? "")
+			if (isNaN(width)) {
+				width = undefined
 			}
-		})
 
-		// Cache the response
-		if (response.ok) {
-			const responseToCache = response.clone()
-			await cache.put(cacheKey, responseToCache)
+			// Get object from cache
+			const object = await env.CACHED_NOTION_IMAGES_BUCKET.get(key)
+			if (!object) {
+				return new Response('Not found', { status: 404 })
+			}
+
+			// Get image URL
+			let result: BodyInit = object.body
+			if (width) {
+				result = await sharp(await object.arrayBuffer())
+					.resize(width)
+					.toFormat('avif', {
+						quality: 100,
+						lossless: true,
+					})
+					.toBuffer()
+			}
+
+			// Return response
+			return new Response(result, {
+				headers: {
+					'Content-Type': 'image/avif',
+				},
+			})
+		} else {
+			return new Response('Method not allowed', { status: 405 })
 		}
-
-		return response
 	},
 } satisfies ExportedHandler<Env>;
