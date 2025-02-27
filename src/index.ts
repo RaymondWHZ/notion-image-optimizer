@@ -41,7 +41,13 @@ export default {
 			let result: BodyInit = object.body
 			if (width) {
 				const inputImage = PhotonImage.new_from_blob(await object.blob())
-				const outputImage = resize(inputImage, width, 0, SamplingFilter.Nearest)
+				const originalWidth = inputImage.get_width()
+				const originalHeight = inputImage.get_height()
+				if (width > originalWidth) {
+					width = originalWidth
+				}
+				const height = Math.round((width / originalWidth) * originalHeight)
+				const outputImage = resize(inputImage, width, height, SamplingFilter.Nearest)
 				result = outputImage.get_bytes_webp()
 				inputImage.free()
 				outputImage.free()
