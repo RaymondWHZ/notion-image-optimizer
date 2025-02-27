@@ -23,7 +23,7 @@ export default {
 			return new Response('Not implemented', { status: 501 })
 		} else if (request.method === 'GET') {
 			// Get object key
-			const key = url.pathname
+			const key = url.pathname.slice(1)
 
 			// Get width query parameters
 			let width: number | undefined = parseInt(url.searchParams.get("width") ?? "")
