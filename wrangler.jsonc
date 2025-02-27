@@ -6,6 +6,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "notion-image-optimizer",
 	"main": "src/index.ts",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
 	"compatibility_date": "2025-02-24",
 	"observability": {
 		"enabled": true
