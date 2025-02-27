@@ -11,7 +11,7 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import sharp from "sharp";
+import { PhotonImage, resize, SamplingFilter } from "@cf-wasm/photon";
 
 export default {
 	async fetch(request, env): Promise<Response> {
@@ -40,19 +40,17 @@ export default {
 			// Get image URL
 			let result: BodyInit = object.body
 			if (width) {
-				result = await sharp(await object.arrayBuffer())
-					.resize(width)
-					.toFormat('avif', {
-						quality: 100,
-						lossless: true,
-					})
-					.toBuffer()
+				const inputImage = PhotonImage.new_from_blob(await object.blob())
+				const outputImage = resize(inputImage, width, 0, SamplingFilter.Nearest)
+				result = outputImage.get_bytes_webp()
+				inputImage.free()
+				outputImage.free()
 			}
 
 			// Return response
 			return new Response(result, {
 				headers: {
-					'Content-Type': 'image/avif',
+					'Content-Type': 'image/webp',
 				},
 			})
 		} else {

@@ -17,6 +17,6 @@
 		"wrangler": "^3.110.0"
 	},
 	"dependencies": {
-		"sharp": "^0.33.5"
+		"@cf-wasm/photon": "^0.1.29"
 	}
 }
