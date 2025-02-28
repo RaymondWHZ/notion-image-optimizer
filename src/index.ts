@@ -43,21 +43,43 @@ export default {
 
 			return new Response('OK')
 		} else if (request.method === 'GET') {
+			// Get cache
+			const cache = caches.default
+
 			// Get object key
 			const key = url.pathname.slice(1)
 
-			// Get object from cache
+			// Check if object is in cache
+			const cachedResponse = await cache.match(key)
+			if (cachedResponse) {
+				return cachedResponse
+			}
+
+			// Get object from R2 bucket
 			const object = await env.CACHED_NOTION_IMAGES_BUCKET.get(key)
 			if (!object) {
 				return new Response('Not found', { status: 404 })
 			}
+
+			// Test if object is a redirect
+			let body: BodyInit = object.body;
 			if (object.customMetadata?.url) {
-				const response = await fetch(object.customMetadata.url)
-				const body = await response.blob()
+				const res = await fetch(object.customMetadata.url)
+				body = await res.blob()
 				await env.CACHED_NOTION_IMAGES_BUCKET.put(key, body)
-				return new Response(body)
 			}
-			return new Response(object.body)
+
+			// Create response
+			const response = new Response(body, {
+				headers: {
+					'Cache-Control': 'private,max-age=86340,immutable,must-revalidate'
+				}
+			})
+
+			// Cache object
+			await cache.put(key, response.clone())
+
+			return response
 		} else {
 			return new Response('Method not allowed', { status: 405 })
 		}
