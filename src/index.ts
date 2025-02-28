@@ -33,11 +33,11 @@ export default {
 
 			await Promise.all([
 				keysToDelete.length > 0 ? env.CACHED_NOTION_IMAGES_BUCKET.delete(keysToDelete) : Promise.resolve(),
-				...keysToCreate.map(async _ => {
-					const response = await fetch(_)
-					const key = getKeyFromNotionImageUrl(_)
-					const body = response.body
-					await env.CACHED_NOTION_IMAGES_BUCKET.put(key, body)
+				...keysToCreate.map(async url => {
+					const key = getKeyFromNotionImageUrl(url)
+					await env.CACHED_NOTION_IMAGES_BUCKET.put(key, null, {
+						customMetadata: { url }
+					})
 				})
 			])
 
@@ -46,27 +46,18 @@ export default {
 			// Get object key
 			const key = url.pathname.slice(1)
 
-			// Get width query parameters
-			let width: number | undefined = parseInt(url.searchParams.get("width") ?? "")
-			if (isNaN(width)) {
-				width = undefined
-			}
-
 			// Get object from cache
 			const object = await env.CACHED_NOTION_IMAGES_BUCKET.get(key)
 			if (!object) {
 				return new Response('Not found', { status: 404 })
 			}
-
-			// Get image URL
-			if (!width) {
-				return new Response(object.body)
-			} else {
-				return (await env.IMAGES.input(object.body)
-				  .transform({ width })
-				  .output({ format: "image/jpeg" }))
-				  .response()
+			if (object.customMetadata?.url) {
+				const response = await fetch(object.customMetadata.url)
+				const body = await response.blob()
+				await env.CACHED_NOTION_IMAGES_BUCKET.put(key, body)
+				return new Response(body)
 			}
+			return new Response(object.body)
 		} else {
 			return new Response('Method not allowed', { status: 405 })
 		}
