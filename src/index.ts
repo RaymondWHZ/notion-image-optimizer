@@ -29,7 +29,7 @@ export default {
 			const { objects } = await env.CACHED_NOTION_IMAGES_BUCKET.list()
 			const currentKeys = objects.map(_ => _.key)
 			const keysToDelete = currentKeys.filter(_ => !newKeySet.has(_))
-			const keysToCreate = notionImageUrls.filter(_ => !currentKeys.includes(_))
+			const keysToCreate = notionImageUrls.filter(_ => !currentKeys.includes(getKeyFromNotionImageUrl(_)))
 
 			await Promise.all([
 				keysToDelete.length > 0 ? env.CACHED_NOTION_IMAGES_BUCKET.delete(keysToDelete) : Promise.resolve(),
