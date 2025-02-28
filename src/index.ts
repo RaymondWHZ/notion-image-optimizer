@@ -46,14 +46,14 @@ export default {
 			// Get cache
 			const cache = caches.default
 
-			// Get object key
-			const key = url.pathname.slice(1)
-
 			// Check if object is in cache
-			const cachedResponse = await cache.match(key)
+			const cachedResponse = await cache.match(url)
 			if (cachedResponse) {
 				return cachedResponse
 			}
+
+			// Get object key
+			const key = url.pathname.slice(1)
 
 			// Get object from R2 bucket
 			const object = await env.CACHED_NOTION_IMAGES_BUCKET.get(key)
@@ -77,7 +77,7 @@ export default {
 			})
 
 			// Cache object
-			await cache.put(key, response.clone())
+			await cache.put(url, response.clone())
 
 			return response
 		} else {
