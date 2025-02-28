@@ -41,7 +41,7 @@ export default {
 			} else {
 				return (await env.IMAGES.input(object.body)
 				  .transform({ width })
-				  .output({ format: "image/webp", quality: 100 }))
+				  .output({ format: "image/jpeg" }))
 				  .response()
 			}
 		} else {
