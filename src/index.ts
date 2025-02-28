@@ -36,20 +36,14 @@ export default {
 			}
 
 			// Get image URL
-			let result: BodyInit = object.body
-			if (width) {
-				result = (await env.IMAGES.input(result)
+			if (!width) {
+				return new Response(object.body)
+			} else {
+				return (await env.IMAGES.input(object.body)
 				  .transform({ width })
-				  .output({ format: "image/avif", quality: 100 }))
-				  .image()
+				  .output({ format: "image/webp", quality: 100 }))
+				  .response()
 			}
-
-			// Return response
-			return new Response(result, {
-				headers: {
-					'Content-Type': 'image/avif',
-				},
-			})
 		} else {
 			return new Response('Method not allowed', { status: 405 })
 		}
